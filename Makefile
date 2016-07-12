@@ -2768,9 +2768,9 @@ LIBGRPC_C_SRC = \
     src/c/bidi_streaming_blocking_call.c \
     src/c/call_ops.c \
     src/c/channel.c \
-    src/c/client_context.c \
     src/c/client_streaming_blocking_call.c \
     src/c/completion_queue.c \
+    src/c/context.c \
     src/c/id_serialization.c \
     src/c/init_shutdown.c \
     src/c/message.c \
@@ -2781,9 +2781,9 @@ LIBGRPC_C_SRC = \
 PUBLIC_HEADERS_C += \
     include/grpc_c/bidi_streaming_blocking_call.h \
     include/grpc_c/channel.h \
-    include/grpc_c/client_context.h \
     include/grpc_c/client_streaming_blocking_call.h \
     include/grpc_c/completion_queue.h \
+    include/grpc_c/context.h \
     include/grpc_c/grpc_c.h \
     include/grpc_c/message.h \
     include/grpc_c/serialization.h \
@@ -4966,7 +4966,6 @@ LIBBORINGSSL_SRC = \
     third_party/boringssl/crypto/ecdsa/ecdsa_asn1.c \
     third_party/boringssl/crypto/engine/engine.c \
     third_party/boringssl/crypto/err/err.c \
-    third_party/boringssl/crypto/err/err_data.c \
     third_party/boringssl/crypto/evp/algorithm.c \
     third_party/boringssl/crypto/evp/digestsign.c \
     third_party/boringssl/crypto/evp/evp.c \
@@ -15232,9 +15231,9 @@ src/c/alloc.c: $(OPENSSL_DEP)
 src/c/bidi_streaming_blocking_call.c: $(OPENSSL_DEP)
 src/c/call_ops.c: $(OPENSSL_DEP)
 src/c/channel.c: $(OPENSSL_DEP)
-src/c/client_context.c: $(OPENSSL_DEP)
 src/c/client_streaming_blocking_call.c: $(OPENSSL_DEP)
 src/c/completion_queue.c: $(OPENSSL_DEP)
+src/c/context.c: $(OPENSSL_DEP)
 src/c/id_serialization.c: $(OPENSSL_DEP)
 src/c/init_shutdown.c: $(OPENSSL_DEP)
 src/c/message.c: $(OPENSSL_DEP)
