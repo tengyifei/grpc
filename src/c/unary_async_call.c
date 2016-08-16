@@ -31,67 +31,122 @@
  *
  */
 
-
+#include "src/c/unary_async_call.h"
 #include <grpc/grpc.h>
+#include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
-#include "unary_async_call.h"
-#include "alloc.h"
-#include <grpc_c/unary_async_call.h>
-#include "tag.h"
+#include <grpc_c/codegen/unary_async_call.h>
+#include "src/c/alloc.h"
+#include "src/c/server.h"
 
-GRPC_client_async_response_reader *GRPC_unary_async_call(GRPC_channel *channel, GRPC_completion_queue *cq, const GRPC_method rpc_method,
-                           const GRPC_message request, GRPC_client_context *context) {
-  grpc_call *call = grpc_channel_create_call(channel,
-                                             NULL,
-                                             GRPC_PROPAGATE_DEFAULTS,
-                                             cq,
-                                             rpc_method.name,
-                                             "",
-                                             context->deadline,
-                                             NULL);
+//
+// Client
+//
+
+static void free_client_reader(void *arg) {
+  GRPC_client_async_response_reader *reader = arg;
+  gpr_free(reader);
+}
+
+GRPC_client_async_response_reader *GRPC_unary_async_call(
+    GRPC_completion_queue *cq, const GRPC_method rpc_method,
+    const GRPC_message request, GRPC_client_context *context) {
+  grpc_call *call = grpc_channel_create_call(
+      context->channel, NULL, GRPC_PROPAGATE_DEFAULTS, cq, rpc_method.name, "",
+      context->deadline, NULL);
   context->call = call;
   context->rpc_method = rpc_method;
-  GRPC_client_async_response_reader *reader = GRPC_ALLOC_STRUCT(GRPC_client_async_response_reader, {
-    .context = context,
-    .call = call,
-    .init_buf = {
-      {
-        grpc_op_send_metadata,
-        grpc_op_send_object,
-        grpc_op_send_close
-      },
-      context,
-      .response = NULL,
-      .hide_from_user = true
-    },
-    .meta_buf = {
-      {
-        grpc_op_recv_metadata
-      },
-      context,
-      .response = NULL
-    },
-    .finish_buf = {
-      {
-        grpc_op_recv_metadata,
-        grpc_op_recv_object,
-        grpc_op_recv_status
-      },
-      context,
-      .response = NULL
-    }
-  });
+  GRPC_client_async_response_reader *reader = GRPC_ALLOC_STRUCT(
+      GRPC_client_async_response_reader,
+      {.context = context,
+       .call = call,
+       .init_buf = {{grpc_op_send_metadata, grpc_op_send_object,
+                     grpc_op_client_send_close},
+                    .context = GRPC_client_context_to_base(context),
+                    .hide_from_user = true},
+       .meta_buf = {{grpc_op_recv_metadata},
+                    .context = GRPC_client_context_to_base(context)},
+       .finish_buf =
+           {
+               {grpc_op_recv_metadata, grpc_op_recv_object,
+                grpc_op_client_recv_status},
+               .context = GRPC_client_context_to_base(context),
+           }});
 
-  grpc_start_batch_from_op_set(reader->call, &reader->init_buf, reader->context, request, NULL);
+  // Different from blocking call, we need to inform completion queue to run
+  // cleanup for us
+  reader->finish_buf.async_cleanup =
+      (GRPC_closure){.arg = reader, .callback = free_client_reader};
+
+  GRPC_start_batch_from_op_set(reader->call, &reader->init_buf,
+                               GRPC_client_context_to_base(reader->context),
+                               request, NULL);
   return reader;
 }
 
-void GRPC_client_async_read_metadata(GRPC_client_async_response_reader *reader, void *tag) {
+void GRPC_client_async_read_metadata(GRPC_client_async_response_reader *reader,
+                                     void *tag) {
   reader->meta_buf.user_tag = tag;
-  grpc_start_batch_from_op_set(reader->call, &reader->meta_buf, reader->context, (GRPC_message) {0}, NULL);
+  GRPC_start_batch_from_op_set(reader->call, &reader->meta_buf,
+                               GRPC_client_context_to_base(reader->context),
+                               (GRPC_message){0, 0}, NULL);
 }
 
-void GRPC_client_async_finish(GRPC_client_async_response_reader *reader, GRPC_message *response, void *tag) {
+void GRPC_client_async_finish(GRPC_client_async_response_reader *reader,
+                              void *response, void *tag) {
   reader->finish_buf.user_tag = tag;
-  grpc_start_batch_from_op_set(reader->call, &reader->finish_buf, reader->context, (GRPC_message) {0}, response);
+  GRPC_start_batch_from_op_set(reader->call, &reader->finish_buf,
+                               GRPC_client_context_to_base(reader->context),
+                               (GRPC_message){0, 0}, response);
+}
+
+//
+// Server
+//
+
+static void free_server_writer(void *arg) {
+  GRPC_server_async_response_writer *writer = arg;
+  gpr_free(writer);
+}
+
+GRPC_server_async_response_writer *GRPC_unary_async_server_request(
+    GRPC_registered_service *service, size_t method_index,
+    GRPC_server_context *const context, void *request,
+    GRPC_incoming_notification_queue *incoming_queue,
+    GRPC_completion_queue *processing_queue, void *tag) {
+  GRPC_server_async_response_writer *writer = GRPC_ALLOC_STRUCT(
+      GRPC_server_async_response_writer,
+      {.context = context,
+       .receive_set =
+           {// deserialize from the payload read by core after the request comes
+            // in
+            .operations = {grpc_op_server_decode_context_payload},
+            .context = GRPC_server_context_to_base(context),
+            .user_tag = tag},
+       .finish_set = {.operations = {grpc_op_send_metadata, grpc_op_send_object,
+                                     grpc_op_server_recv_close,
+                                     grpc_op_server_send_status},
+                      .context = GRPC_server_context_to_base(context)}});
+
+  writer->finish_set.async_cleanup =
+      (GRPC_closure){.arg = writer, .callback = free_server_writer};
+
+  GPR_ASSERT(GRPC_server_request_call(service, method_index, context,
+                                      incoming_queue, processing_queue,
+                                      &writer->receive_set) == GRPC_CALL_OK);
+  GRPC_start_batch_from_op_set(NULL, &writer->receive_set,
+                               GRPC_server_context_to_base(context),
+                               (GRPC_message){0, 0}, request);
+  return writer;
+}
+
+void GRPC_unary_async_server_finish(GRPC_server_async_response_writer *writer,
+                                    const GRPC_message response,
+                                    const grpc_status_code server_status,
+                                    void *tag) {
+  writer->finish_set.user_tag = tag;
+  writer->context->server_return_status = server_status;
+  GRPC_start_batch_from_op_set(writer->context->call, &writer->finish_set,
+                               GRPC_server_context_to_base(writer->context),
+                               response, NULL);
 }

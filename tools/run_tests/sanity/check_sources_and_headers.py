@@ -39,7 +39,7 @@ with open(os.path.join(root, 'tools', 'run_tests', 'sources_and_headers.json')) 
 
 re_inc1 = re.compile(r'^#\s*include\s*"([^"]*)"')
 assert re_inc1.match('#include "foo"').group(1) == 'foo'
-re_inc2 = re.compile(r'^#\s*include\s*<((grpc|grpc\+\+)/[^"]*)>')
+re_inc2 = re.compile(r'^#\s*include\s*<((grpc|grpc\+\+|grpc_c)/[^"]*)>')
 assert re_inc2.match('#include <grpc++/foo>').group(1) == 'grpc++/foo'
 
 def get_target(name):
@@ -55,7 +55,8 @@ def target_has_header(target, name):
   for dep in target['deps']:
     if target_has_header(get_target(dep), name):
       return True
-  if name == 'src/core/lib/profiling/stap_probes.h':
+  if name in ['src/core/lib/profiling/stap_probes.h',
+              'src/proto/grpc/reflection/v1alpha/reflection.grpc.pb.h']:
     return True
   return False
 

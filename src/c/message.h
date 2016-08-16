@@ -31,12 +31,11 @@
  *
  */
 
+#ifndef GRPC_C_INTERNAL_MESSAGE_H
+#define GRPC_C_INTERNAL_MESSAGE_H
 
-#ifndef TEST_GRPC_C_MESSAGE_H
-#define TEST_GRPC_C_MESSAGE_H
-
-#include <grpc_c/message.h>
+#include <grpc_c/codegen/message.h>
 
 typedef GRPC_message grpc_message;
 
-#endif //TEST_GRPC_C_MESSAGE_H
+#endif  // GRPC_C_INTERNAL_MESSAGE_H

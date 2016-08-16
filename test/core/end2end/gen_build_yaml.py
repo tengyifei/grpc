@@ -53,13 +53,13 @@ fd_unsecure_fixture_options = default_unsecure_fixture_options._replace(
 END2END_FIXTURES = {
     'h2_compress': default_unsecure_fixture_options,
     'h2_census': default_unsecure_fixture_options,
+    'h2_load_reporting': default_unsecure_fixture_options,
     'h2_fakesec': default_secure_fixture_options._replace(ci_mac=False),
     'h2_fd': fd_unsecure_fixture_options,
     'h2_full': default_unsecure_fixture_options,
     'h2_full+pipe': default_unsecure_fixture_options._replace(
         platforms=['linux']),
     'h2_full+trace': default_unsecure_fixture_options._replace(tracing=True),
-    'h2_loadreporting': default_unsecure_fixture_options,
     'h2_oauth2': default_secure_fixture_options._replace(ci_mac=False),
     'h2_proxy': default_unsecure_fixture_options._replace(includes_proxy=True,
                                                           ci_mac=False),
@@ -102,6 +102,7 @@ END2END_TESTS = {
     'disappearing_server': connectivity_test_options,
     'empty_batch': default_test_options,
     'filter_causes_close': default_test_options,
+    'filter_call_init_fails': default_test_options,
     'graceful_server_shutdown': default_test_options._replace(cpu_cost=LOWCPU),
     'hpack_size': default_test_options._replace(proxyable=False,
                                                 traceable=False),
@@ -115,6 +116,7 @@ END2END_TESTS = {
     'network_status_change': default_test_options,
     'no_op': default_test_options,
     'payload': default_test_options,
+    'load_reporting_hook': default_test_options,
     'ping_pong_streaming': default_test_options,
     'ping': connectivity_test_options._replace(proxyable=False),
     'registered_call': default_test_options,
@@ -173,7 +175,7 @@ def main():
           {
               'name': 'end2end_tests',
               'build': 'private',
-              'language': 'c',
+              'language': 'core',
               'secure': True,
               'src': ['test/core/end2end/end2end_tests.c'] + [
                   'test/core/end2end/tests/%s.c' % t
@@ -187,7 +189,7 @@ def main():
           {
               'name': 'end2end_nosec_tests',
               'build': 'private',
-              'language': 'c',
+              'language': 'core',
               'secure': False,
               'src': ['test/core/end2end/end2end_nosec_tests.c'] + [
                   'test/core/end2end/tests/%s.c' % t
@@ -203,7 +205,7 @@ def main():
           {
               'name': '%s_test' % f,
               'build': 'test',
-              'language': 'c',
+              'language': 'core',
               'run': False,
               'src': ['test/core/end2end/fixtures/%s.c' % f],
               'platforms': END2END_FIXTURES[f].platforms,
@@ -220,7 +222,7 @@ def main():
           {
               'name': '%s_nosec_test' % f,
               'build': 'test',
-              'language': 'c',
+              'language': 'core',
               'secure': 'no',
               'src': ['test/core/end2end/fixtures/%s.c' % f],
               'run': False,
@@ -246,7 +248,7 @@ def main():
                                if END2END_FIXTURES[f].ci_mac else without(
                                    END2END_FIXTURES[f].platforms, 'mac')),
               'flaky': False,
-              'language': 'c',
+              'language': 'core',
               'cpu_cost': END2END_TESTS[t].cpu_cost,
           }
           for f in sorted(END2END_FIXTURES.keys())
@@ -261,7 +263,7 @@ def main():
                                if END2END_FIXTURES[f].ci_mac else without(
                                    END2END_FIXTURES[f].platforms, 'mac')),
               'flaky': False,
-              'language': 'c',
+              'language': 'core',
               'cpu_cost': END2END_TESTS[t].cpu_cost,
           }
           for f in sorted(END2END_FIXTURES.keys())

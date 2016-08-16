@@ -31,20 +31,21 @@
  *
  */
 
+#ifndef GRPC_C_INTERNAL_CLIENT_STREAMING_BLOCKING_CALL_H
+#define GRPC_C_INTERNAL_CLIENT_STREAMING_BLOCKING_CALL_H
 
-#ifndef TEST_GRPC_C_CLIENT_STREAMING_BLOCKING_CALL_H
-#define TEST_GRPC_C_CLIENT_STREAMING_BLOCKING_CALL_H
+#include <grpc_c/codegen/client_streaming_blocking_call.h>
+#include <grpc_c/grpc_c.h>
+#include "src/c/call_ops.h"
+#include "src/c/client_context.h"
 
-#include <grpc_c/client_streaming_blocking_call.h>
-#include "call_ops.h"
+struct GRPC_client_writer {
+  GRPC_call_op_set finish_ops;
 
-typedef struct grpc_client_writer {
-  grpc_call_op_set finish_ops;
-
-  grpc_client_context *context;
+  GRPC_client_context *context;
   grpc_call *call;
   grpc_completion_queue *cq;
-  grpc_message *response;
-} grpc_client_writer;
+  void *response;
+};
 
-#endif //TEST_GRPC_C_CLIENT_STREAMING_BLOCKING_CALL_H
+#endif  // GRPC_C_INTERNAL_CLIENT_STREAMING_BLOCKING_CALL_H

@@ -31,22 +31,19 @@
  *
  */
 
+#include "src/c/client_context.h"
 #include <grpc/support/alloc.h>
-#include <grpc_c/grpc_c.h>
 #include <grpc_c/client_context.h>
-#include "client_context.h"
-#include "alloc.h"
-#include "id_serialization.h"
+#include <grpc_c/grpc_c.h>
+#include "src/c/alloc.h"
 
-grpc_client_context *GRPC_client_context_create(grpc_channel *chan) {
-  grpc_client_context *context = GRPC_ALLOC_STRUCT(
-    grpc_client_context, {
-      .deadline = gpr_inf_future(GPR_CLOCK_REALTIME),
-      .channel = chan,
-      .serialize = GRPC_id_serialize,
-      .deserialize = GRPC_id_deserialize
-    }
-  );
+GRPC_client_context *GRPC_client_context_create(grpc_channel *chan) {
+  GRPC_client_context *context = GRPC_ALLOC_STRUCT(
+      grpc_client_context,
+      {.deadline = gpr_inf_future(GPR_CLOCK_REALTIME),
+       .channel = chan,
+       .serialization_impl = {.serialize = NULL, .deserialize = NULL},
+       .status = {.ok = true}});
   return context;
 }
 
@@ -58,6 +55,17 @@ void GRPC_client_context_destroy(GRPC_client_context **context) {
     grpc_call_destroy((*context)->call);
     (*context)->call = NULL;
   }
-  free(*context);
+  gpr_free(*context);
   *context = NULL;
+}
+
+GRPC_status GRPC_get_call_status(GRPC_client_context *context) {
+  return context->status;
+}
+
+// We define a conversion function instead of type-casting, which lets the user
+// convert
+// from any pointer to a grpc_context.
+GRPC_context *GRPC_client_context_to_base(GRPC_client_context *client_context) {
+  return (GRPC_context *)client_context;
 }

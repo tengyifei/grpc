@@ -31,16 +31,36 @@
  *
  */
 
+#ifndef GRPC_C_STATUS_H
+#define GRPC_C_STATUS_H
 
-#ifndef GRPC_C_STATUS_PUBLIC_H
-#define GRPC_C_STATUS_PUBLIC_H
+#include <grpc/impl/codegen/status.h>
+#include <stdbool.h>
+#include <stddef.h>
 
-typedef struct grpc_status {
-  grpc_status_code code;
+typedef grpc_status_code GRPC_status_code;
+
+typedef struct GRPC_status {
+  /**
+   * Indicator of success for the entire RPC operation, including network,
+   * serialization, etc.
+   */
+  bool ok;
+
+  /**
+   * Status code coming from the remote server.
+   */
+  GRPC_status_code code;
+
+  /**
+   * Detailed status string from the server.
+   */
   char *details;
+
+  /**
+   * Length of status string.
+   */
   size_t details_length;
-} grpc_status;
+} GRPC_status;
 
-typedef grpc_status GRPC_status;
-
-#endif // GRPC_C_STATUS_CODE_PUBLIC_H
+#endif /* GRPC_C_STATUS_H */

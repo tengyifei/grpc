@@ -31,7 +31,7 @@
 set -e
 
 # directories to run against
-DIRS="src/core/lib src/core/ext src/cpp test/core test/cpp include"
+DIRS="src/core/lib src/core/ext src/cpp test/core test/cpp include src/compiler"
 
 # file matching patterns to check
 GLOB="*.h *.c *.cc"
@@ -44,7 +44,7 @@ for dir in $DIRS
 do
   for glob in $GLOB
   do
-    files="$files `find /local-code/$dir -name $glob -and -not -name *.generated.* -and -not -name *.pb.h -and -not -name *.pb.c -and -not -name *.pb.cc`"
+    files="$files `find /local-code/$dir -name $glob -and -not -name *.generated.* -and -not -name *.pb.h -and -not -name *.pb.c -and -not -name *.pb.cc -and -not -name *.pbc.h -and -not -name *.pbc.c`"
   done
 done
 

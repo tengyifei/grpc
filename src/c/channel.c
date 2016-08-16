@@ -31,17 +31,17 @@
  *
  */
 
-#include <grpc_c/grpc_c.h>
-#include <grpc_c/channel.h>
-#include "init_shutdown.h"
 #include <grpc/grpc.h>
+#include <grpc_c/channel.h>
+#include <grpc_c/grpc_c.h>
+#include "src/c/init_shutdown.h"
 
-grpc_channel *GRPC_channel_create(const char * const target) {
-  grpc_ensure_grpc_init();
+GRPC_channel *GRPC_channel_create(const char *const target) {
+  GRPC_ensure_grpc_init();
   return grpc_insecure_channel_create(target, NULL, NULL);
 }
 
-void GRPC_channel_destroy(grpc_channel ** channel) {
+void GRPC_channel_destroy(GRPC_channel **channel) {
   grpc_channel_destroy(*channel);
   *channel = NULL;
 }

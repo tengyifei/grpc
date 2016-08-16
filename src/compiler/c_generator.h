@@ -40,9 +40,26 @@
 namespace grpc_c_generator {
 
 using ::grpc::protobuf::ServiceDescriptor;
-using ::grpc_cpp_generator::Parameters;
 using ::grpc_cpp_generator::File;
 using ::grpc::string;
+
+// Contains all the parameters that are parsed from the command line.
+struct Parameters {
+  // Use system includes (<>) or local includes ("")
+  bool use_system_headers;
+  // Prefix to any grpc include
+  grpc::string grpc_search_path;
+  // Prefix to nanopb includes
+  grpc::string nanopb_headers_prefix;
+};
+
+class CFile : public grpc_cpp_generator::File {
+ public:
+  // List of messages defined in the file
+  virtual std::vector<const google::protobuf::Descriptor *> messages()
+      const = 0;
+  virtual std::vector<std::unique_ptr<CFile> > dependencies() const = 0;
+};
 
 // Return the prologue of the generated header file.
 grpc::string GetHeaderPrologue(File *file, const Parameters &params);
@@ -70,4 +87,4 @@ grpc::string GetSourceEpilogue(File *file, const Parameters &params);
 
 }  // namespace grpc_c_generator
 
-#endif // GRPC_INTERNAL_COMPILER_C_GENERATOR_H
+#endif  // GRPC_INTERNAL_COMPILER_C_GENERATOR_H

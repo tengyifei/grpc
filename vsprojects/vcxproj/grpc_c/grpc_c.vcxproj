@@ -258,38 +258,49 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\bidi_streaming_blocking_call.h" />
     <ClInclude Include="$(SolutionDir)\..\include\grpc_c\channel.h" />
     <ClInclude Include="$(SolutionDir)\..\include\grpc_c\client_context.h" />
-    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\client_streaming_blocking_call.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\codegen\bidi_streaming_blocking_call.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\codegen\client_streaming_blocking_call.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\codegen\context.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\codegen\message.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\codegen\method.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\codegen\pb_compat.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\codegen\serialization.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\codegen\server.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\codegen\server_streaming_blocking_call.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\codegen\unary_async_call.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\codegen\unary_blocking_call.h" />
     <ClInclude Include="$(SolutionDir)\..\include\grpc_c\completion_queue.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\declare_serializer.h" />
     <ClInclude Include="$(SolutionDir)\..\include\grpc_c\grpc_c.h" />
-    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\message.h" />
-    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\serialization.h" />
-    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\server_streaming_blocking_call.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\server.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\server_context.h" />
+    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\server_incoming_queue.h" />
     <ClInclude Include="$(SolutionDir)\..\include\grpc_c\status.h" />
-    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\status_code.h" />
-    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\unary_async_call.h" />
-    <ClInclude Include="$(SolutionDir)\..\include\grpc_c\unary_blocking_call.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(SolutionDir)\..\src\c\alloc.h" />
+    <ClInclude Include="$(SolutionDir)\..\src\c\array.h" />
     <ClInclude Include="$(SolutionDir)\..\src\c\bidi_streaming_blocking_call.h" />
     <ClInclude Include="$(SolutionDir)\..\src\c\call_ops.h" />
     <ClInclude Include="$(SolutionDir)\..\src\c\client_context.h" />
     <ClInclude Include="$(SolutionDir)\..\src\c\client_streaming_blocking_call.h" />
     <ClInclude Include="$(SolutionDir)\..\src\c\completion_queue.h" />
-    <ClInclude Include="$(SolutionDir)\..\src\c\id_serialization.h" />
+    <ClInclude Include="$(SolutionDir)\..\src\c\context.h" />
     <ClInclude Include="$(SolutionDir)\..\src\c\init_shutdown.h" />
     <ClInclude Include="$(SolutionDir)\..\src\c\message.h" />
+    <ClInclude Include="$(SolutionDir)\..\src\c\server.h" />
+    <ClInclude Include="$(SolutionDir)\..\src\c\server_context.h" />
+    <ClInclude Include="$(SolutionDir)\..\src\c\server_incoming_queue.h" />
     <ClInclude Include="$(SolutionDir)\..\src\c\server_streaming_blocking_call.h" />
-    <ClInclude Include="$(SolutionDir)\..\src\c\status.h" />
-    <ClInclude Include="$(SolutionDir)\..\src\c\tag.h" />
     <ClInclude Include="$(SolutionDir)\..\src\c\unary_async_call.h" />
     <ClInclude Include="$(SolutionDir)\..\src\c\unary_blocking_call.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(SolutionDir)\..\src\c\alloc.c">
+    </ClCompile>
+    <ClCompile Include="$(SolutionDir)\..\src\c\array.c">
     </ClCompile>
     <ClCompile Include="$(SolutionDir)\..\src\c\bidi_streaming_blocking_call.c">
     </ClCompile>
@@ -303,11 +314,19 @@
     </ClCompile>
     <ClCompile Include="$(SolutionDir)\..\src\c\completion_queue.c">
     </ClCompile>
-    <ClCompile Include="$(SolutionDir)\..\src\c\id_serialization.c">
+    <ClCompile Include="$(SolutionDir)\..\src\c\context.c">
     </ClCompile>
     <ClCompile Include="$(SolutionDir)\..\src\c\init_shutdown.c">
     </ClCompile>
     <ClCompile Include="$(SolutionDir)\..\src\c\message.c">
+    </ClCompile>
+    <ClCompile Include="$(SolutionDir)\..\src\c\pb_compat.c">
+    </ClCompile>
+    <ClCompile Include="$(SolutionDir)\..\src\c\server.c">
+    </ClCompile>
+    <ClCompile Include="$(SolutionDir)\..\src\c\server_context.c">
+    </ClCompile>
+    <ClCompile Include="$(SolutionDir)\..\src\c\server_incoming_queue.c">
     </ClCompile>
     <ClCompile Include="$(SolutionDir)\..\src\c\server_streaming_blocking_call.c">
     </ClCompile>

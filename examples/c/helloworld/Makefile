@@ -29,9 +29,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+NANOPB_DIR := $(abspath ../../../third_party/nanopb)
+NANOPB_CORE = $(NANOPB_DIR)/pb_encode.c $(NANOPB_DIR)/pb_decode.c $(NANOPB_DIR)/pb_common.c
+
 CC = gcc
-CFLAGS += -I/usr/local/include -pthread
-LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc` -lprotobuf -lpthread -ldl
+CFLAGS += -I/usr/local/include -I$(NANOPB_DIR)/ -pthread
+LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc` -lgrpc_c -lprotobuf -lpthread -ldl
 PROTOC = protoc
 GRPC_C_PLUGIN = grpc_c_plugin
 GRPC_C_PLUGIN_PATH ?= `which $(GRPC_C_PLUGIN)`
@@ -40,16 +43,19 @@ PROTOS_PATH = ../../protos
 
 vpath %.proto $(PROTOS_PATH)
 
-all: system-check greeter_client greeter_async_client greeter_async_client2
+all: system-check greeter_client greeter_async_client greeter_async_client2 greeter_async_server
 
 greeter_client: helloworld.pbc.o helloworld.grpc.pbc.o greeter_client.o
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(NANOPB_CORE) $(LDFLAGS) -o $@
 
 greeter_async_client: helloworld.pbc.o helloworld.grpc.pbc.o greeter_async_client.o
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(NANOPB_CORE) $(LDFLAGS) -o $@
 
 greeter_async_client2: helloworld.pbc.o helloworld.grpc.pbc.o greeter_async_client2.o
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(NANOPB_CORE) $(LDFLAGS) -o $@
+
+greeter_async_server: helloworld.pbc.o helloworld.grpc.pbc.o greeter_async_server.o
+	$(CC) $^ $(NANOPB_CORE) $(LDFLAGS) -o $@
 
 .PRECIOUS: %.grpc.pbc.c
 %.grpc.pbc.c: %.proto
@@ -57,10 +63,10 @@ greeter_async_client2: helloworld.pbc.o helloworld.grpc.pbc.o greeter_async_clie
 
 .PRECIOUS: %.pbc.c
 %.pbc.c: %.proto
-	$(PROTOC) -I $(PROTOS_PATH) --c_out=. $<
+	$(PROTOC) --plugin=protoc-gen-nanopb=$(NANOPB_DIR)/generator/protoc-gen-nanopb -I $(PROTOS_PATH) --nanopb_out=--extension=.pbc:. $<
 
 clean:
-	rm -f *.o *.pbc.c *.pbc.h greeter_client greeter_async_client greeter_async_client2
+	rm -f *.o *.pb.c *.pb.h *.pbc.c *.pbc.h greeter_client greeter_async_client greeter_async_client2 greeter_async_server
 
 
 # The following is to test your system and ensure a smoother experience.

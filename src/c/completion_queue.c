@@ -31,14 +31,19 @@
  *
  */
 
+/**
+ * Wraps the grpc_completion_queue type.
+ */
 
+#include "src/c/completion_queue.h"
 #include <grpc/grpc.h>
 #include <grpc/support/log.h>
 #include <grpc_c/grpc_c.h>
-#include "completion_queue.h"
-#include "call_ops.h"
+#include "src/c/call_ops.h"
+#include "src/c/init_shutdown.h"
 
 GRPC_completion_queue *GRPC_completion_queue_create() {
+  GRPC_ensure_grpc_init();
   return grpc_completion_queue_create(NULL);
 }
 
@@ -50,21 +55,20 @@ void GRPC_completion_queue_destroy(GRPC_completion_queue *cq) {
   grpc_completion_queue_destroy(cq);
 }
 
-void GRPC_completion_queue_shutdown_and_destroy(GRPC_completion_queue *cq) {
-  grpc_completion_queue_shutdown(cq);
+void GRPC_completion_queue_shutdown_wait(GRPC_completion_queue *cq) {
   for (;;) {
     void *tag;
     bool ok;
-    if (GRPC_commit_ops_and_wait(cq, &tag, &ok) == GRPC_COMPLETION_QUEUE_SHUTDOWN) break;
+    if (GRPC_completion_queue_next(cq, &tag, &ok) ==
+        GRPC_COMPLETION_QUEUE_SHUTDOWN)
+      break;
   }
-  grpc_completion_queue_destroy(cq);
 }
 
-GRPC_completion_queue_operation_status GRPC_commit_ops_and_wait_deadline(GRPC_completion_queue *cq,
-                                                                         gpr_timespec deadline,
-                                                                         void **tag, bool *ok) {
+GRPC_completion_queue_operation_status GRPC_completion_queue_next_deadline(
+    GRPC_completion_queue *cq, GRPC_timespec deadline, void **tag, bool *ok) {
   for (;;) {
-    grpc_call_op_set *set = NULL;
+    GRPC_call_op_set *set = NULL;
     grpc_event ev = grpc_completion_queue_next(cq, deadline, NULL);
     switch (ev.type) {
       case GRPC_QUEUE_TIMEOUT:
@@ -72,36 +76,52 @@ GRPC_completion_queue_operation_status GRPC_commit_ops_and_wait_deadline(GRPC_co
       case GRPC_QUEUE_SHUTDOWN:
         return GRPC_COMPLETION_QUEUE_SHUTDOWN;
       case GRPC_OP_COMPLETE:
-        set = (grpc_call_op_set *) ev.tag;
+        set = (GRPC_call_op_set *)ev.tag;
         GPR_ASSERT(set != NULL);
         GPR_ASSERT(set->context != NULL);
         // run post-processing for async operations
-        bool status = grpc_finish_op_from_call_set(set, set->context);
+        bool status = GRPC_finish_op_from_call_set(set, set->context);
+        bool hide_from_user = set->hide_from_user;
+        void *user_tag = set->user_tag;
 
-        if (set->hide_from_user) {
+        // run user-defined cleanup
+        if (set->async_cleanup.callback) {
+          set->async_cleanup.callback(set->async_cleanup.arg);
+        }
+        // set could be freed from this point onwards
+
+        if (hide_from_user) {
           // don't touch user supplied pointers
           continue;
         }
 
-        *tag = set->user_tag;
+        *tag = user_tag;
         *ok = (ev.success != 0) && status;
+
         return GRPC_COMPLETION_QUEUE_GOT_EVENT;
     }
   }
 }
 
-GRPC_completion_queue_operation_status GRPC_commit_ops_and_wait(GRPC_completion_queue *cq, void **tag, bool *ok) {
-  return GRPC_commit_ops_and_wait_deadline(cq, gpr_inf_future(GPR_CLOCK_REALTIME), tag, ok);
+GRPC_completion_queue_operation_status GRPC_completion_queue_next(
+    GRPC_completion_queue *cq, void **tag, bool *ok) {
+  return GRPC_completion_queue_next_deadline(
+      cq, gpr_inf_future(GPR_CLOCK_REALTIME), tag, ok);
 }
 
-bool GRPC_completion_queue_pluck_internal(GRPC_completion_queue *cq, void *tag) {
+bool GRPC_completion_queue_pluck_internal(GRPC_completion_queue *cq,
+                                          void *tag) {
   gpr_timespec deadline = gpr_inf_future(GPR_CLOCK_REALTIME);
   grpc_event ev = grpc_completion_queue_pluck(cq, tag, deadline, NULL);
-  grpc_call_op_set *set = (grpc_call_op_set *) ev.tag;
+  GRPC_call_op_set *set = (GRPC_call_op_set *)ev.tag;
   GPR_ASSERT(set != NULL);
   GPR_ASSERT(set->context != NULL);
   GPR_ASSERT(set->user_tag == ev.tag);
   // run post-processing
-  grpc_finish_op_from_call_set(set, set->context);
-  return ev.success != 0;
+  bool status = GRPC_finish_op_from_call_set(set, set->context);
+  // run user-defined cleanup
+  if (set->async_cleanup.callback) {
+    set->async_cleanup.callback(set->async_cleanup.arg);
+  }
+  return (ev.success != 0) && status;
 }
